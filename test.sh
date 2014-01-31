@@ -1,7 +1,7 @@
 #!/bin/sh -e
 # This script runs unit tests in all the subpackages.
 
-export GOPATH="`pwd`:`pwd`/vendor"
+export GOPATH="`pwd`:`pwd`/vendor:`pwd`/adminUI"
 cd src/github.com/couchbaselabs/sync_gateway
 
 # vet reports two errors which are actually OK here.  There are flags
