@@ -22,6 +22,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"path"
 	"os"
 	"strconv"
 	"strings"
@@ -108,10 +109,16 @@ func (h *handler) invoke(method handlerMethod) error {
 	defer restExpvars.Add("requests_active", -1)
 
 	var err error
-	if h.server.config.CompressResponses == nil || *h.server.config.CompressResponses {
-		if encoded := NewEncodedResponseWriter(h.response, h.rq); encoded != nil {
-			h.response = encoded
-			defer encoded.Close()
+
+	//Do not promote http response to an EncodedResponseWriter if this is
+	//A _changes feed request with a feed type of 'websocket'. Web Sockets only support
+	//compression at the frame level
+	if (!(path.Base(h.rq.URL.Path) == "_changes" && h.getQuery("feed") == "websocket")) {
+		if (h.server.config.CompressResponses == nil || *h.server.config.CompressResponses) {
+			if encoded := NewEncodedResponseWriter(h.response, h.rq); encoded != nil {
+				h.response = encoded
+				defer encoded.Close()
+			}
 		}
 	}
 
@@ -386,7 +393,7 @@ func (h *handler) setStatus(status int, message string) {
 
 func (h *handler) disableResponseCompression() {
 	switch r := h.response.(type) {
-	case *EncodedResponseWriter:
+		case *EncodedResponseWriter:
 		r.disableCompression()
 	}
 }
@@ -472,7 +479,7 @@ func (h *handler) writeMultipart(subtype string, callback func(*multipart.Writer
 
 func (h *handler) flush() {
 	switch r := h.response.(type) {
-	case http.Flusher:
+		case http.Flusher:
 		r.Flush()
 	}
 }
