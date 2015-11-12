@@ -551,7 +551,7 @@ func TestInvalidChannel(t *testing.T) {
 
 	db.ChannelMapper = channels.NewDefaultChannelMapper()
 
-	body := Body{"channels": []string{"bad name"}}
+	body := Body{"channels": []string{"bad,name"}}
 	_, err := db.Put("doc", body)
 	assertHTTPError(t, err, 500)
 }
@@ -583,7 +583,7 @@ func TestAccessFunctionValidation(t *testing.T) {
 	_, err = db.Put("doc5", body)
 	assertHTTPError(t, err, 500)
 
-	body = Body{"users": []string{"username"}, "userChannels": []string{"bad name"}}
+	body = Body{"users": []string{"username"}, "userChannels": []string{"bad,name"}}
 	_, err = db.Put("doc6", body)
 	assertHTTPError(t, err, 500)
 }
