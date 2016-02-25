@@ -1,26 +1,19 @@
 #!/bin/sh -e
 
-# This script builds the sync gateway. You can't just run "go install"
-# directly, because we need to tell the Go compiler how to find the
-# dependent packages (in vendor) and the gateway source code (in src)
-# by setting $GOPATH.
+# This script builds sync gateway using pinned dependencies via the repo tool
+#
+# - Set GOPATH and call 'go install' to compile and build Sync Gateway binaries
 
-# Set the git commit info before the build
-BUILD_INFO="./src/github.com/couchbase/sync_gateway/rest/git_info.go"
-#tell git to ignore any local changes to git_info.go, we don't want to commit them to the repo
-git update-index --assume-unchanged ${BUILD_INFO}
-# Escape forward slash's so sed command does not get confused
-# We use thses in feature branches e.g. feature/issue_nnn
-GIT_BRANCH=`git status -b -s | sed q | sed 's/## //' | sed 's/\.\.\..*$//' | sed 's/\\//\\\\\//g' | sed 's/[[:space:]]//g'`
-GIT_COMMIT=`git rev-parse HEAD`
-GIT_DIRTY=$(test -n "`git status --porcelain`" && echo "+CHANGES" || true)
+## Update the version stamp in the code
+SG_DIR=`pwd`/godeps/src/github.com/couchbase/sync_gateway
+CURRENT_DIR=`pwd`
+cd $SG_DIR
+./set-version-stamp.sh
+cd $CURRENT_DIR
 
-sed -i.bak -e 's/GitCommit.*=.*/GitCommit = "'$GIT_COMMIT'"/' $BUILD_INFO
-sed -i.bak -e 's/GitBranch.*=.*/GitBranch = "'$GIT_BRANCH'"/' $BUILD_INFO
-sed -i.bak -e 's/GitDirty.*=.*/GitDirty = "'$GIT_DIRTY'"/' $BUILD_INFO
+## Go Install
+echo "Building code with 'go install' ..."
+GOPATH=`pwd`/godeps go install "$@" github.com/couchbase/sync_gateway/...
 
-export GOBIN="`pwd`/bin"
+echo "Success! Output is godeps/bin/sync_gateway and godeps/bin/sg_accel "
 
-./go.sh install "$@" -v github.com/couchbase/sync_gateway
-./go.sh install "$@" -v github.com/couchbase/sync_gateway/sg_accel
-echo "Success! Output is bin/sync_gateway and bin/sg_accel"

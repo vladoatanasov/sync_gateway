@@ -1,3 +1,5 @@
+[![Build Status](http://drone.couchbasemobile.com/api/badges/couchbase/sync_gateway/status.svg)](http://drone.couchbasemobile.com/couchbase/sync_gateway)
+
 # Couchbase Sync Gateway
 
 [![Join the chat at https://gitter.im/couchbase/sync_gateway](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/couchbase/sync_gateway?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -12,46 +14,60 @@ The Sync Gateway manages HTTP-based data access for mobile clients. It handles a
 
 [**Downloads**](http://www.couchbase.com/download#cb-mobile)
 
-## Building From Source
+## Build pre-requisites
 
 To build Sync Gateway from source, you must have the following installed:
 
-* Go 1.5 or later 
+* Go 1.5 or later with your `$GOPATH` set to a valid directory
 * GCC for CGO (required on Sync Gateway 1.2 or later)
 
-On Mac or Unix systems, you can build Sync Gateway from source as follows:
+## Building From source (without dependency pinning)
 
-Open a terminal window and change to the directory that you want to store Sync Gateway in.
-
-Clone the Sync Gateway GitHub repository:
+Warning: while this is the easiest way to build sync gateway from source, there are [known issues](https://github.com/couchbase/sync_gateway/issues/1585) with this approach that cause certain tests to fail!  To be able to run the full unit test suite and have it pass, skip down to the approach to build from source with dependency pinning.
 
 ```
-$ git clone https://github.com/couchbase/sync_gateway.git
+go get -u -t github.com/couchbase/sync_gateway/...
 ```
- 
-Change to the sync_gateway directory:
+
+After this operation completes you should have a new `sync_gateway` binary in `$GOPATH/bin`
+
+**Running Unit Tests**
 
 ```
-$ cd sync_gateway
+$ go test github.com/couchbase/sync_gateway/...
 ```
- 
-Set up the submodules:
+
+**Running Benchmarks**
 
 ```
-$ git submodule init
-$ git submodule update
+go test github.com/couchbase/sync_gateway/... -bench='LoggingPerformance' -benchtime 1m -run XXX
+go test github.com/couchbase/sync_gateway/... -bench='RestApiGetDocPerformance' -cpu 1,2,4 -benchtime 1m -run XXX
 ```
-Build Sync Gateway:
+
+## Building From Source (with dependency pinning)
+
+Running the scripts below will clone this repository and all of it's dependencies (pinned to specific versions as specified in the manifest)
+
+```
+$ mkdir ~/sync_gateway
+$ cd ~/sync_gateway
+$ brew install repo
+$ wget https://raw.githubusercontent.com/couchbase/sync_gateway/master/bootstrap.sh
+$ chmod +x bootstrap.sh
+$ ./bootstrap.sh
+```
+
+**Build**
 
 ```
 $ ./build.sh
 ```
-Sync Gateway is a standalone, native executable located in the ./bin directory. You can run the executable from the build location or move it anywhere you want.
 
-To update your build later, pull the latest updates from GitHub, update the submodules, and run ./build.sh again.
+**Running Unit Tests**
 
-
-<img src="http://jchris.ic.ht/files/slides/mobile-arch.png" width="600px"/>
+```
+$ ./test.sh
+```
 
 ### License
 
